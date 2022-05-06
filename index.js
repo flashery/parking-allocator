@@ -32,7 +32,12 @@ function ask(questionText) {
   });
 }
 
-async function park(entry_point) {
+async function park() {
+  
+  const entry_point = entry_points[randomEntryPoint(0, 2)];
+  console.log("You are from entry point", entry_point)
+  console.log("Slot near entry point ", entry_point,parking_slots.filter(slot => slot.near_entry_point === entry_point))
+
   const vehicle_id = await ask("What is your vehicle id?: ");
   const vehicle_color = await ask("What your vehicle color?: ");
   const vehicle_size = await ask("What is the size of your vehicle? (S|M|L): ");
@@ -52,7 +57,7 @@ async function park(entry_point) {
     if (
       !parking_slots[i].occopied &&
       parking_slots[i].allowed_vehicle_size.includes(vehicle_size) &&
-      parking_slots[i].new_entry_point === entry_point
+      parking_slots[i].near_entry_point === entry_point
     ) {
       parking_slot = parking_slots[i];
       console.log("Parking slot found for your vehicle!", parking_slot)
@@ -126,9 +131,10 @@ async function computePaymentandPay(parking_slot) {
   }
   console.log(`Your total parking amount is ${price}`)
   const paid = await pay(price);
+  
+  console.log('========== computePaymentandPay', paid);
 
   if (paid) {
-    console.log("Thank you for using our parking slot");
     return paid;
   }
 }
@@ -136,14 +142,18 @@ async function computePaymentandPay(parking_slot) {
 async function pay(price) {
   const payment = await ask("Please enter your payment: ");
   price -= payment;
+  let paid = false;
   
   if (price > 0) {
     console.log(`Sorry, you still have existing amount to be pay ${price}`);
     console.log(`Please pay before exiting.`);
     await pay(price);
+    paid = false
   } else {
-    return true;
+    paid = true;
+    console.log("Thank you for using our parking slot",paid);
   }
+  return paid;
 }
 
 function computeExceedingHours(parking_slot, hours) {
@@ -166,9 +176,7 @@ async function parkPrompt() {
   let answer = await ask("Want to park or unpark a vehicle? (P|UP|X): ");
 
   if (answer === "P") {
-    const entry_point = entry_points[randomEntryPoint(0, 2)];
-    console.log("You are from entry point", entry_point)
-    park(entry_point);
+    park();
   } else if (answer === "UP") {
     unpark();
   } else if (answer === "X") {
